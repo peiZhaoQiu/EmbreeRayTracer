@@ -6,11 +6,10 @@
 #include <math.h>
 #include <limits>
 #include <stdio.h>
+#include <tiny_obj_loader.h>
+#include <iostream>
+#include <glm/glm.hpp>
 
-#if defined(_WIN32)
-#  include <conio.h>
-#  include <windows.h>
-#endif
 
 /*
  * A minimal tutorial. 
@@ -173,6 +172,7 @@ void castRay(RTCScene scene,
   rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
   rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
+
   /*
    * There are multiple variants of rtcIntersect. This one
    * intersects a single ray with the scene.
@@ -189,36 +189,110 @@ void castRay(RTCScene scene,
      * get geomID=0 / primID=0 for all hits.
      * There is also instID, used for instancing. See
      * the instancing tutorials for more information */
-    printf("Found intersection on geometry %d, primitive %d at tfar=%f\n", 
+    printf("Found intersection on geometry %d, primitive %d at tfar=%f\n, with normal %f, %f, %f\n, intersection point %f, %f, %f\n", 
            rayhit.hit.geomID,
            rayhit.hit.primID,
-           rayhit.ray.tfar);
+           rayhit.ray.tfar,
+           rayhit.hit.Ng_x, rayhit.hit.Ng_y, rayhit.hit.Ng_z,
+           rayhit.ray.org_x + rayhit.ray.dir_x * rayhit.ray.tfar,
+           rayhit.ray.org_y + rayhit.ray.dir_y * rayhit.ray.tfar,
+           rayhit.ray.org_z + rayhit.ray.dir_z * rayhit.ray.tfar 
+           );
+
+
+           glm::vec3 normal(rayhit.hit.Ng_x, rayhit.hit.Ng_y, rayhit.hit.Ng_z);
+           normal = glm::normalize(normal);
+           std::cout << "Normal: " << normal.x << ", " << normal.y << ", " << normal.z << std::endl;
   }
+  
   else
     printf("Did not find any intersection.\n");
 }
 
-void waitForKeyPressedUnderWindows()
+std::vector<int> addObject(RTCScene &scene, RTCDevice device, std::string objFilePath)
 {
-#if defined(_WIN32)
-  HANDLE hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-  
-  CONSOLE_SCREEN_BUFFER_INFO csbi;
-  if (!GetConsoleScreenBufferInfo(hStdOutput, &csbi)) {
-    printf("GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
-    return;
-  }
-  
-  /* do not pause when running on a shell */
-  if (csbi.dwCursorPosition.X != 0 || csbi.dwCursorPosition.Y != 0)
-    return;
-  
-  /* only pause if running in separate console window. */
-  printf("\n\tPress any key to exit...\n");
-  _getch();
-#endif
-}
+  std::vector<int> geomIDs;
+  tinyobj::attrib_t attrib;
+  std::vector<tinyobj::shape_t> shapes;
+  std::vector<tinyobj::material_t> materials;
+  std::string err;
+  std::string warn;
+  bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, objFilePath.c_str());
 
+  if (!warn.empty()) {
+    std::cout << warn << std::endl;
+  }
+
+  if(!err.empty()) {
+    std::cerr << err << std::endl;
+    return geomIDs;
+  }
+
+  if (!ret) {
+    std::cerr << "Failed to load " << objFilePath << std::endl;
+    return geomIDs;
+  }
+  std::cout << "Loaded " << objFilePath << shapes.size()<< std::endl;
+  for (const auto& shape : shapes) {
+    std::cout << shape.name << std::endl;
+      for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
+        std::vector<glm::vec3> vertices;
+        for (int j = 0; j < 3; ++j) {
+            unsigned int index = shape.mesh.indices[i + j].vertex_index;
+            float vx = attrib.vertices[3 * index];
+            float vy = attrib.vertices[3 * index + 1];
+            float vz = attrib.vertices[3 * index + 2];
+            vertices.push_back(glm::vec3(vx, vy, vz));
+          }
+
+          RTCGeometry geom = rtcNewGeometry(device, RTC_GEOMETRY_TYPE_TRIANGLE);
+
+
+            //RTCBuffer vertexBuffer = rtcNewBuffer(device, sizeof(glm::vec3), 3);
+            glm::vec3* verticesPtr = (glm::vec3*)rtcSetNewGeometryBuffer(geom, 
+                                                                        RTC_BUFFER_TYPE_VERTEX, 
+                                                                        0, 
+                                                                        RTC_FORMAT_FLOAT3, 
+                                                                        sizeof(glm::vec3), 
+                                                                        3);
+
+                                                                      
+
+
+            //RTCBuffer indexBuffer = rtcNewBuffer(device, sizeof(unsigned int), 3);
+            unsigned* indicesPtr = (unsigned*)rtcSetNewGeometryBuffer(geom, 
+                                                                      RTC_BUFFER_TYPE_INDEX, 
+                                                                      0, 
+                                                                      RTC_FORMAT_UINT3, 
+                                                                      3*sizeof(unsigned), 
+                                                                      1);
+                                                    
+            if  (verticesPtr && indicesPtr) 
+            {
+                    for (int j = 0; j < 3; ++j) {
+                        verticesPtr[j] = vertices[j];
+                    }
+                    indicesPtr[0] = 0;
+                    indicesPtr[1] = 1;
+                    indicesPtr[2] = 2;
+            }
+            else
+            {
+                std::cout << "Failed to create buffers" << std::endl;
+                return geomIDs;
+            } 
+
+            rtcCommitGeometry(geom);
+            int geomID = rtcAttachGeometry(scene, geom);
+            rtcReleaseGeometry(geom);
+            geomIDs.push_back(geomID);
+      }
+
+  }
+
+
+  return geomIDs;
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -227,21 +301,33 @@ int main()
   /* Initialization. All of this may fail, but we will be notified by
    * our errorFunction. */
   RTCDevice device = initializeDevice();
-  RTCScene scene = initializeScene(device);
 
+  RTCScene scene = rtcNewScene(device);
+  //RTCScene scene = initializeScene(device);
+  auto is = addObject(scene, device, "/home/peizhao/Desktop/raytracer/Model/floor.obj");
+  std::cout << is.size() <<" "<<is[0] << std::endl;
+  auto js = addObject(scene, device, "/home/peizhao/Desktop/raytracer/Model/tallbox.obj");
+  std::cout << js.size() << " "<<js[0] << std::endl;
+  auto ks = addObject(scene, device, "/home/peizhao/Desktop/raytracer/Model/shortbox.obj");
+  std::cout << ks.size() <<" "<< ks[0] << std::endl;
+
+
+  rtcCommitScene(scene);
   /* This will hit the triangle at t=1. */
   castRay(scene, 0.33f, 0.33f, -1, 0, 0, 1);
 
   /* This will not hit anything. */
   castRay(scene, 1.00f, 1.00f, -1, 0, 0, 1);
 
+  castRay(scene, 150.00f, 240.00f, 167.0f, 0, -1, 0);
+
+
+
   /* Though not strictly necessary in this example, you should
    * always make sure to release resources allocated through Embree. */
   rtcReleaseScene(scene);
   rtcReleaseDevice(device);
   
-  /* wait for user input under Windows when opened in separate window */
-  waitForKeyPressedUnderWindows();
   
   return 0;
 }
