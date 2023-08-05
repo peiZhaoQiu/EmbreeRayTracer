@@ -9,6 +9,7 @@
 #include <tiny_obj_loader.h>
 #include <iostream>
 #include <glm/glm.hpp>
+#include <filesystem>
 
 
 /*
@@ -303,21 +304,28 @@ int main()
   RTCDevice device = initializeDevice();
 
   RTCScene scene = rtcNewScene(device);
+  // get source file directory path and convert to string
+
+  std::string file_path = __FILE__;
+  std::string dir_path = file_path.substr(0, file_path.rfind("/"));
+  std::cout<<file_path<<std::endl;
+  std::string ModelDir = dir_path + "/Model/";
+
   //RTCScene scene = initializeScene(device);
-  auto is = addObject(scene, device, "/home/peizhao/Desktop/raytracer/Model/floor.obj");
+  auto is = addObject(scene, device, ModelDir + "floor.obj");
   std::cout << is.size() <<" "<<is[0] << std::endl;
-  auto js = addObject(scene, device, "/home/peizhao/Desktop/raytracer/Model/tallbox.obj");
+  auto js = addObject(scene, device, ModelDir + "tallbox.obj");
   std::cout << js.size() << " "<<js[0] << std::endl;
-  auto ks = addObject(scene, device, "/home/peizhao/Desktop/raytracer/Model/shortbox.obj");
+  auto ks = addObject(scene, device, ModelDir + "shortbox.obj");
   std::cout << ks.size() <<" "<< ks[0] << std::endl;
 
 
   rtcCommitScene(scene);
   /* This will hit the triangle at t=1. */
-  castRay(scene, 0.33f, 0.33f, -1, 0, 0, 1);
+  castRay(scene, 0.33f, 0.33f, -100.0f, 0, 0, 1);
 
   /* This will not hit anything. */
-  castRay(scene, 1.00f, 1.00f, -1, 0, 0, 1);
+  castRay(scene, 1.00f, 1.00f, -100.0f, 0, 0, 1);
 
   castRay(scene, 150.00f, 240.00f, 167.0f, 0, -1, 0);
 
