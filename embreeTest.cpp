@@ -314,18 +314,18 @@ int main()
   //RTCScene scene = initializeScene(device);
   auto is = addObject(scene, device, ModelDir + "floor.obj");
   std::cout << is.size() <<" "<<is[0] << std::endl;
-  auto js = addObject(scene, device, ModelDir + "tallbox.obj");
-  std::cout << js.size() << " "<<js[0] << std::endl;
-  auto ks = addObject(scene, device, ModelDir + "shortbox.obj");
-  std::cout << ks.size() <<" "<< ks[0] << std::endl;
+  // auto js = addObject(scene, device, ModelDir + "tallbox.obj");
+  // std::cout << js.size() << " "<<js[0] << std::endl;
+  // auto ks = addObject(scene, device, ModelDir + "shortbox.obj");
+  // std::cout << ks.size() <<" "<< ks[0] << std::endl;
 
 
   rtcCommitScene(scene);
   /* This will hit the triangle at t=1. */
-  castRay(scene, 0.33f, 0.33f, -100.0f, 0, 0, 1);
+  castRay(scene, 0.33f, 0.33f, 10.0f, 0, 0, 1);
 
   /* This will not hit anything. */
-  castRay(scene, 1.00f, 1.00f, -100.0f, 0, 0, 1);
+  castRay(scene, 1.00f, 100.00f, 1.0f, 0, -1, 0);
 
   castRay(scene, 150.00f, 240.00f, 167.0f, 0, -1, 0);
 
