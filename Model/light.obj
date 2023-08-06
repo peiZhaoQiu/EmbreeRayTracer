@@ -1,3 +1,9 @@
+# original cornell box data
+
+mtllib cornell_box.mtl
+
+o light
+usemtl light
 v 343.0 548.7 227.0 
 v 343.0 548.7 332.0
 v 213.0 548.7 332.0

@@ -1,3 +1,9 @@
+# original cornell box data
+
+mtllib cornell_box.mtl
+
+o left
+usemtl red
 v 552.8 0.0 0.0 
 v 549.6 0.0 559.2
 v 556.0 548.8 559.2

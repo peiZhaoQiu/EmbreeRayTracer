@@ -9,7 +9,7 @@
 #include <tiny_obj_loader.h>
 #include <iostream>
 #include <glm/glm.hpp>
-#include <filesystem>
+#include "OBJ_Loader.hpp"
 
 
 /*
@@ -75,82 +75,10 @@ RTCDevice initializeDevice()
 }
 
 /*
- * Create a scene, which is a collection of geometry objects. Scenes are 
- * what the intersect / occluded functions work on. You can think of a 
- * scene as an acceleration structure, e.g. a bounding-volume hierarchy.
- *
- * Scenes, like devices, are reference-counted.
- */
-RTCScene initializeScene(RTCDevice device)
-{
-  RTCScene scene = rtcNewScene(device);
-
-  /* 
-   * Create a triangle mesh geometry, and initialize a single triangle.
-   * You can look up geometry types in the API documentation to
-   * find out which type expects which buffers.
-   *
-   * We create buffers directly on the device, but you can also use
-   * shared buffers. For shared buffers, special care must be taken
-   * to ensure proper alignment and padding. This is described in
-   * more detail in the API documentation.
-   */
-  RTCGeometry geom = rtcNewGeometry(device, RTC_GEOMETRY_TYPE_TRIANGLE);
-  float* vertices = (float*) rtcSetNewGeometryBuffer(geom,
-                                                     RTC_BUFFER_TYPE_VERTEX,
-                                                     0,
-                                                     RTC_FORMAT_FLOAT3,
-                                                     3*sizeof(float),
-                                                     3);
-
-  unsigned* indices = (unsigned*) rtcSetNewGeometryBuffer(geom,
-                                                          RTC_BUFFER_TYPE_INDEX,
-                                                          0,
-                                                          RTC_FORMAT_UINT3,
-                                                          3*sizeof(unsigned),
-                                                          1);
-
-  if (vertices && indices)
-  {
-    vertices[0] = 0.f; vertices[1] = 0.f; vertices[2] = 0.f;
-    vertices[3] = 1.f; vertices[4] = 0.f; vertices[5] = 0.f;
-    vertices[6] = 0.f; vertices[7] = 1.f; vertices[8] = 0.f;
-
-    indices[0] = 0; indices[1] = 1; indices[2] = 2;
-  }
-
-  /*
-   * You must commit geometry objects when you are done setting them up,
-   * or you will not get any intersections.
-   */
-  rtcCommitGeometry(geom);
-
-  /*
-   * In rtcAttachGeometry(...), the scene takes ownership of the geom
-   * by increasing its reference count. This means that we don't have
-   * to hold on to the geom handle, and may release it. The geom object
-   * will be released automatically when the scene is destroyed.
-   *
-   * rtcAttachGeometry() returns a geometry ID. We could use this to
-   * identify intersected objects later on.
-   */
-  rtcAttachGeometry(scene, geom);
-  rtcReleaseGeometry(geom);
-
-  /*
-   * Like geometry objects, scenes must be committed. This lets
-   * Embree know that it may start building an acceleration structure.
-   */
-  rtcCommitScene(scene);
-
-  return scene;
-}
-
-/*
  * Cast a single ray with origin (ox, oy, oz) and direction
  * (dx, dy, dz).
  */
-void castRay(RTCScene scene, 
+void castRay(RTCScene &scene, 
              float ox, float oy, float oz,
              float dx, float dy, float dz)
 {
@@ -210,90 +138,7 @@ void castRay(RTCScene scene,
     printf("Did not find any intersection.\n");
 }
 
-std::vector<int> addObject(RTCScene &scene, RTCDevice device, std::string objFilePath)
-{
-  std::vector<int> geomIDs;
-  tinyobj::attrib_t attrib;
-  std::vector<tinyobj::shape_t> shapes;
-  std::vector<tinyobj::material_t> materials;
-  std::string err;
-  std::string warn;
-  bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, objFilePath.c_str());
 
-  if (!warn.empty()) {
-    std::cout << warn << std::endl;
-  }
-
-  if(!err.empty()) {
-    std::cerr << err << std::endl;
-    return geomIDs;
-  }
-
-  if (!ret) {
-    std::cerr << "Failed to load " << objFilePath << std::endl;
-    return geomIDs;
-  }
-  std::cout << "Loaded " << objFilePath << shapes.size()<< std::endl;
-  for (const auto& shape : shapes) {
-    std::cout << shape.name << std::endl;
-      for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
-        std::vector<glm::vec3> vertices;
-        for (int j = 0; j < 3; ++j) {
-            unsigned int index = shape.mesh.indices[i + j].vertex_index;
-            float vx = attrib.vertices[3 * index];
-            float vy = attrib.vertices[3 * index + 1];
-            float vz = attrib.vertices[3 * index + 2];
-            vertices.push_back(glm::vec3(vx, vy, vz));
-          }
-
-          RTCGeometry geom = rtcNewGeometry(device, RTC_GEOMETRY_TYPE_TRIANGLE);
-
-
-            //RTCBuffer vertexBuffer = rtcNewBuffer(device, sizeof(glm::vec3), 3);
-            glm::vec3* verticesPtr = (glm::vec3*)rtcSetNewGeometryBuffer(geom, 
-                                                                        RTC_BUFFER_TYPE_VERTEX, 
-                                                                        0, 
-                                                                        RTC_FORMAT_FLOAT3, 
-                                                                        sizeof(glm::vec3), 
-                                                                        3);
-
-                                                                      
-
-
-            //RTCBuffer indexBuffer = rtcNewBuffer(device, sizeof(unsigned int), 3);
-            unsigned* indicesPtr = (unsigned*)rtcSetNewGeometryBuffer(geom, 
-                                                                      RTC_BUFFER_TYPE_INDEX, 
-                                                                      0, 
-                                                                      RTC_FORMAT_UINT3, 
-                                                                      3*sizeof(unsigned), 
-                                                                      1);
-                                                    
-            if  (verticesPtr && indicesPtr) 
-            {
-                    for (int j = 0; j < 3; ++j) {
-                        verticesPtr[j] = vertices[j];
-                    }
-                    indicesPtr[0] = 0;
-                    indicesPtr[1] = 1;
-                    indicesPtr[2] = 2;
-            }
-            else
-            {
-                std::cout << "Failed to create buffers" << std::endl;
-                return geomIDs;
-            } 
-
-            rtcCommitGeometry(geom);
-            int geomID = rtcAttachGeometry(scene, geom);
-            rtcReleaseGeometry(geom);
-            geomIDs.push_back(geomID);
-      }
-
-  }
-
-
-  return geomIDs;
-}
 
 /* -------------------------------------------------------------------------- */
 
@@ -314,13 +159,15 @@ int main()
   std::string ModelDir = dir_path + "/Model/";
 
   //RTCScene scene = initializeScene(device);
-  auto is = addObject(scene, device, ModelDir + "floor.obj");
-  std::cout << is.size() <<" "<<is[0] << std::endl;
-  // auto js = addObject(scene, device, ModelDir + "tallbox.obj");
+  auto is = OBJ_Loader::addObject(scene, device, ModelDir , "floor.obj");
+  //std::cout << is.size() <<" "<<is[0] << std::endl;
+  auto js = OBJ_Loader::addObject(scene, device, ModelDir , "tallbox.obj");
   // std::cout << js.size() << " "<<js[0] << std::endl;
-  // auto ks = addObject(scene, device, ModelDir + "shortbox.obj");
+  auto ks = OBJ_Loader::addObject(scene, device, ModelDir , "shortbox.obj");
   // std::cout << ks.size() <<" "<< ks[0] << std::endl;
 
+  auto ls = OBJ_Loader::addObject(scene, device, ModelDir , "left.obj");
+  auto rs = OBJ_Loader::addObject(scene, device, ModelDir , "right.obj");
 
   rtcCommitScene(scene);
   /* This will hit the triangle at t=1. */
