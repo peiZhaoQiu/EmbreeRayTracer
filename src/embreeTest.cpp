@@ -307,8 +307,10 @@ int main()
   // get source file directory path and convert to string
 
   std::string file_path = __FILE__;
-  std::string dir_path = file_path.substr(0, file_path.rfind("/"));
-  std::cout<<file_path<<std::endl;
+  std::string file_path_1 = file_path.substr(0, file_path.rfind("/"));
+  std::string dir_path = file_path_1.substr(0, file_path_1.rfind("/"));
+  std::cout<< file_path_1<< std::endl;
+  std::cout<<dir_path<<std::endl;
   std::string ModelDir = dir_path + "/Model/";
 
   //RTCScene scene = initializeScene(device);
