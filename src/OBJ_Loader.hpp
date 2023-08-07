@@ -4,6 +4,8 @@
 #include <tiny_obj_loader.h>
 #include <string>
 #include <vector>
+#include "Material.hpp"
+#include "Vector.hpp"
 
 
 
@@ -43,30 +45,37 @@ namespace OBJ_Loader
         auto& materials = reader.GetMaterials();
 
         std::cout << shapes.size() << "  "<< materials.size() <<std::endl;
+        // for(auto& mat:materials)
+        // {
+        //     std::cout << mat.diffuse[0] << " " << std::endl;
+        // }
+
         std::cout << "Loaded " << inputfile << std::endl;
 
             for (size_t i = 0; i<shapes.size(); i++) {
                 tinyobj::shape_t shape = shapes[i];
+                size_t index_offset = 0;
+
                 std::cout << shape.name << std::endl;
                 for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
-                    std::vector<glm::vec3> vertices;
+                    std::vector<Vector3f> vertices;
                     for (int j = 0; j < 3; ++j) {
                         unsigned int index = shape.mesh.indices[i + j].vertex_index;
                         float vx = attrib.vertices[3 * index];
                         float vy = attrib.vertices[3 * index + 1];
                         float vz = attrib.vertices[3 * index + 2];
-                        vertices.push_back(glm::vec3(vx, vy, vz));
+                        vertices.push_back(Vector3f(vx, vy, vz));
                     }
 
                     RTCGeometry geom = rtcNewGeometry(device, RTC_GEOMETRY_TYPE_TRIANGLE);
 
 
                         //RTCBuffer vertexBuffer = rtcNewBuffer(device, sizeof(glm::vec3), 3);
-                        glm::vec3* verticesPtr = (glm::vec3*)rtcSetNewGeometryBuffer(geom, 
+                        Vector3f* verticesPtr = (Vector3f*)rtcSetNewGeometryBuffer(geom, 
                                                                                     RTC_BUFFER_TYPE_VERTEX, 
                                                                                     0, 
                                                                                     RTC_FORMAT_FLOAT3, 
-                                                                                    sizeof(glm::vec3), 
+                                                                                    sizeof(Vector3f), 
                                                                                     3);
 
                                                                                 
@@ -99,7 +108,16 @@ namespace OBJ_Loader
                         int geomID = rtcAttachGeometry(scene, geom);
                         rtcReleaseGeometry(geom);
                         geomIDs.push_back(geomID);
+                
                 }
+                for(auto& id:shape.mesh.material_ids)
+                {
+
+                    std::cout<< id << "  ";
+                }
+
+                std::cout << std::endl;
+                
 
             }
 
