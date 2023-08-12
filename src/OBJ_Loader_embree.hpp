@@ -1,18 +1,19 @@
-#pragma
+#pragma once
 
 #include <glm/glm.hpp>
 #include <tiny_obj_loader.h>
 #include <string>
 #include <vector>
 #include "Material.hpp"
-#include "Vector.hpp"
+#include "Vec.hpp"
+#include <iostream>
 
 
 
 namespace OBJ_Loader
 {
 
-    std::vector<int> addObject(RTCScene &scene, RTCDevice device, std::string objFilePath, std::string objFile)
+    std::vector<int> addObject(RTCScene &scene, RTCDevice &device, std::string objFilePath, std::string objFile)
     {
         std::vector<int> geomIDs;
         // tinyobj::attrib_t attrib;
@@ -58,24 +59,24 @@ namespace OBJ_Loader
 
                 std::cout << shape.name << std::endl;
                 for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
-                    std::vector<Vector3f> vertices;
+                    std::vector<Vec3f> vertices;
                     for (int j = 0; j < 3; ++j) {
                         unsigned int index = shape.mesh.indices[i + j].vertex_index;
                         float vx = attrib.vertices[3 * index];
                         float vy = attrib.vertices[3 * index + 1];
                         float vz = attrib.vertices[3 * index + 2];
-                        vertices.push_back(Vector3f(vx, vy, vz));
+                        vertices.push_back(Vec3f(vx, vy, vz));
                     }
 
                     RTCGeometry geom = rtcNewGeometry(device, RTC_GEOMETRY_TYPE_TRIANGLE);
 
 
                         //RTCBuffer vertexBuffer = rtcNewBuffer(device, sizeof(glm::vec3), 3);
-                        Vector3f* verticesPtr = (Vector3f*)rtcSetNewGeometryBuffer(geom, 
+                                Vec3f*  verticesPtr = (Vec3f*)rtcSetNewGeometryBuffer(geom, 
                                                                                     RTC_BUFFER_TYPE_VERTEX, 
                                                                                     0, 
                                                                                     RTC_FORMAT_FLOAT3, 
-                                                                                    sizeof(Vector3f), 
+                                                                                    sizeof(Vec3f), 
                                                                                     3);
 
                                                                                 
@@ -133,4 +134,4 @@ namespace OBJ_Loader
 
 
 
-}
+};

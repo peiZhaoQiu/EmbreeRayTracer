@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vector.hpp"
+#include "Vec.hpp"
 
 
 enum MaterialType {DIFFUSE, EMISSION};

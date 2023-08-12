@@ -9,7 +9,8 @@
 #include <tiny_obj_loader.h>
 #include <iostream>
 #include <glm/glm.hpp>
-#include "OBJ_Loader.hpp"
+//#include "OBJ_Loader.hpp"
+#include "Scene.hpp"
 
 
 /*
@@ -47,10 +48,10 @@ RTC_NAMESPACE_USE
  * This is extremely helpful for finding bugs in your code, prevents you
  * from having to add explicit error checking to each Embree API call.
  */
-void errorFunction(void* userPtr, enum RTCError error, const char* str)
-{
-  printf("error %d: %s\n", error, str);
-}
+// void errorFunction(void* userPtr, enum RTCError error, const char* str)
+// {
+//   printf("error %d: %s\n", error, str);
+// }
 
 /*
  * Embree has a notion of devices, which are entities that can run 
@@ -63,16 +64,16 @@ void errorFunction(void* userPtr, enum RTCError error, const char* str)
  *
  * Note that RTCDevice is reference-counted.
  */
-RTCDevice initializeDevice()
-{
-  RTCDevice device = rtcNewDevice(NULL);
+// RTCDevice initializeDevice()
+// {
+//   RTCDevice device = rtcNewDevice(NULL);
 
-  if (!device)
-    printf("error %d: cannot create device\n", rtcGetDeviceError(NULL));
+//   if (!device)
+//     printf("error %d: cannot create device\n", rtcGetDeviceError(NULL));
 
-  rtcSetDeviceErrorFunction(device, errorFunction, NULL);
-  return device;
-}
+//   rtcSetDeviceErrorFunction(device, errorFunction, NULL);
+//   return device;
+// }
 
 /*
  * Cast a single ray with origin (ox, oy, oz) and direction
@@ -141,15 +142,57 @@ void castRay(RTCScene &scene,
 
 
 /* -------------------------------------------------------------------------- */
+/**/
+// int main()
+// {
+//   /* Initialization. All of this may fail, but we will be notified by
+//    * our errorFunction. */
+//   RTCDevice device = initializeDevice();
 
-int main()
-{
-  /* Initialization. All of this may fail, but we will be notified by
-   * our errorFunction. */
-  RTCDevice device = initializeDevice();
+//   RTCScene scene = rtcNewScene(device);
+//   // get source file directory path and convert to string
 
-  RTCScene scene = rtcNewScene(device);
-  // get source file directory path and convert to string
+//   std::string file_path = __FILE__;
+//   std::string file_path_1 = file_path.substr(0, file_path.rfind("/"));
+//   std::string dir_path = file_path_1.substr(0, file_path_1.rfind("/"));
+//   std::cout<< file_path_1<< std::endl;
+//   std::cout<<dir_path<<std::endl;
+//   std::string ModelDir = dir_path + "/Model/";
+
+//   //RTCScene scene = initializeScene(device);
+//   auto is = OBJ_Loader::addObject(scene, device, ModelDir , "floor.obj");
+//   //std::cout << is.size() <<" "<<is[0] << std::endl;
+//   auto js = OBJ_Loader::addObject(scene, device, ModelDir , "tallbox.obj");
+//   // std::cout << js.size() << " "<<js[0] << std::endl;
+//   auto ks = OBJ_Loader::addObject(scene, device, ModelDir , "shortbox.obj");
+//   // std::cout << ks.size() <<" "<< ks[0] << std::endl;
+
+//   auto ls = OBJ_Loader::addObject(scene, device, ModelDir , "left.obj");
+//   auto rs = OBJ_Loader::addObject(scene, device, ModelDir , "right.obj");
+
+//   rtcCommitScene(scene);
+//   /* This will hit the triangle at t=1. */
+//   castRay(scene, 0.33f, 0.33f, 10.0f, 0, 0, 1);
+
+//   /* This will not hit anything. */
+//   castRay(scene, 1.00f, 100.00f, 1.0f, 0, -1, 0);
+
+//   castRay(scene, 150.00f, 240.00f, 167.0f, 0, -1, 0);
+
+
+
+//   /* Though not strictly necessary in this example, you should
+//    * always make sure to release resources allocated through Embree. */
+//   rtcReleaseScene(scene);
+//   rtcReleaseDevice(device);
+  
+  
+//   return 0;
+// }
+
+
+
+int main(){
 
   std::string file_path = __FILE__;
   std::string file_path_1 = file_path.substr(0, file_path.rfind("/"));
@@ -158,34 +201,23 @@ int main()
   std::cout<<dir_path<<std::endl;
   std::string ModelDir = dir_path + "/Model/";
 
-  //RTCScene scene = initializeScene(device);
-  auto is = OBJ_Loader::addObject(scene, device, ModelDir , "floor.obj");
-  //std::cout << is.size() <<" "<<is[0] << std::endl;
-  auto js = OBJ_Loader::addObject(scene, device, ModelDir , "tallbox.obj");
-  // std::cout << js.size() << " "<<js[0] << std::endl;
-  auto ks = OBJ_Loader::addObject(scene, device, ModelDir , "shortbox.obj");
-  // std::cout << ks.size() <<" "<< ks[0] << std::endl;
 
-  auto ls = OBJ_Loader::addObject(scene, device, ModelDir , "left.obj");
-  auto rs = OBJ_Loader::addObject(scene, device, ModelDir , "right.obj");
+  Scene scene;
+  auto a = scene.addMeshObj(ModelDir, "floor.obj");
+  auto b = scene.addMeshObj(ModelDir, "tallbox.obj");
+  auto c = scene.addMeshObj(ModelDir, "shortbox.obj");
+  auto d = scene.addMeshObj(ModelDir, "left.obj");
+  auto e = scene.addMeshObj(ModelDir, "right.obj");
 
-  rtcCommitScene(scene);
-  /* This will hit the triangle at t=1. */
-  castRay(scene, 0.33f, 0.33f, 10.0f, 0, 0, 1);
-
-  /* This will not hit anything. */
-  castRay(scene, 1.00f, 100.00f, 1.0f, 0, -1, 0);
-
-  castRay(scene, 150.00f, 240.00f, 167.0f, 0, -1, 0);
+  Ray ray1(Vec3f(0.33f,0.33f,10.0f), Vec3f(0,0,1));
+  Ray ray2(Vec3f(1.00f,100.00f,1.0f), Vec3f(0,-1,0));
+  Ray ray3(Vec3f(150.00f,240.00f,167.0f), Vec3f(0,-1,0));
 
 
+  auto l = scene.castRay(ray1);
+  auto k = scene.castRay(ray2);
+  auto m = scene.castRay(ray3);
 
-  /* Though not strictly necessary in this example, you should
-   * always make sure to release resources allocated through Embree. */
-  rtcReleaseScene(scene);
-  rtcReleaseDevice(device);
-  
-  
   return 0;
 }
 
