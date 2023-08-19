@@ -7,13 +7,19 @@
 #include "Material.hpp"
 #include "Vec.hpp"
 #include <iostream>
+#include "Triangle.hpp"
 
-
+struct OBJ_result{
+    std::vector<Triangle> Triangles;
+    std::vector<Material> Materials;
+    std::vector<int> geomIDs;
+    std::vector<int> materialIDs;
+};
 
 namespace OBJ_Loader
 {
 
-    std::vector<int> addObject(RTCScene &scene, RTCDevice &device, std::string objFilePath, std::string objFile)
+    OBJ_result addObject(RTCScene &scene, RTCDevice &device, std::string objFilePath, std::string objFile)
     {
         std::vector<int> geomIDs;
         // tinyobj::attrib_t attrib;
@@ -22,7 +28,7 @@ namespace OBJ_Loader
         // std::string err;
         // std::string warn;
 
-
+        OBJ_result result;
 
         std::string inputfile = objFilePath + objFile;
         tinyobj::ObjReaderConfig reader_config;
@@ -34,7 +40,7 @@ namespace OBJ_Loader
             if (!reader.Error().empty()) {
                 std::cerr << "TinyObjReader: " << reader.Error();
             }
-            return geomIDs;
+            return result;
         }
 
         if (!reader.Warning().empty()) {
@@ -46,10 +52,15 @@ namespace OBJ_Loader
         auto& materials = reader.GetMaterials();
 
         std::cout << shapes.size() << "  "<< materials.size() <<std::endl;
-        // for(auto& mat:materials)
-        // {
-        //     std::cout << mat.diffuse[0] << " " << std::endl;
-        // }
+        for(size_t i = 0; i< materials.size();i++)
+        {
+            //std::cout << materials[0].diffuse << " " << std::endl;
+            Vec3f diffuseVec(materials[i].diffuse[0],materials[i].diffuse[1],materials[i].diffuse[2]);
+            Vec3f specularVec(materials[i].specular[0],materials[i].specular[1],materials[i].specular[2]);
+            Vec3f emissionVec(materials[i].emission[0],materials[i].emission[1],materials[i].emission[2]);
+            Material mat = Material(emissionVec,specularVec,diffuseVec);
+            result.Materials.push_back(mat);
+        }
 
         std::cout << "Loaded " << inputfile << std::endl;
 
@@ -102,28 +113,31 @@ namespace OBJ_Loader
                         else
                         {
                             std::cout << "Failed to create buffers" << std::endl;
-                            return geomIDs;
+                            return result;
                         } 
 
+                        Triangle tri(vertices[0],vertices[1],vertices[2]);
+                        result.Triangles.push_back(tri);
                         rtcCommitGeometry(geom);
                         int geomID = rtcAttachGeometry(scene, geom);
                         rtcReleaseGeometry(geom);
-                        geomIDs.push_back(geomID);
+                        result.geomIDs.push_back(geomID);
                 
                 }
                 for(auto& id:shape.mesh.material_ids)
                 {
 
                     std::cout<< id << "  ";
+                    result.materialIDs.push_back(id);
                 }
 
                 std::cout << std::endl;
                 
 
             }
+        std::cout << "Loaded " << inputfile << std::endl;
 
-
-        return geomIDs;
+        return result;
     }
 
  

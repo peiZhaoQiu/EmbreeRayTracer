@@ -3,22 +3,22 @@
 #include "common.hpp"
 
 
-class Triangle : public Object
+class Triangle : public Geometry
 {
     public:
          
         Vec3f _v1,_v2,_v3;
-        Material* material; 
-        Triangle (const Vec3f &v1,const Vec3f &v2, const Vec3f &v3, Material* m):_v1(v1),_v2(v2),_v3(v3),material(m)
+        Triangle (const Vec3f &v1,const Vec3f &v2, const Vec3f &v3):_v1(v1),_v2(v2),_v3(v3)
         {
             e1 = _v2 - _v1;
             e2 = _v3 - _v1;
             normal = glm::normalize(glm::cross(e1,e2));
             area = glm::length(glm::cross(e1,e2))*0.5f;
         }
+        ~Triangle(){}
 
-    bool intersect(const Ray& ray) override;
-    Intersection getIntersection(const Ray& ray) override;
+    bool intersect(const Ray& ray) override{};
+    Intersection getIntersection(const Ray& ray) override{};
         
          
     float getArea() override{

@@ -4,11 +4,11 @@
 #include "Ray.hpp"
 #include "Intersection.hpp"
 
-class Object
+class Geometry
 {
 public:
-    Object() {}
-    virtual ~Object(){}
+    Geometry() {}
+    virtual ~Geometry(){}
     virtual bool intersect(const Ray& ray) = 0;
     virtual Intersection getIntersection(const Ray& ray) = 0;
     virtual float getArea()= 0;
