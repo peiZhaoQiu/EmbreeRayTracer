@@ -135,7 +135,7 @@ class EmbreeScene : public Scene
                                               rayhit.ray.org_y + rayhit.ray.dir_y * rayhit.ray.tfar,
                                               rayhit.ray.org_z + rayhit.ray.dir_z * rayhit.ray.tfar);
             intersection._normal = Vec3f(rayhit.hit.Ng_x, rayhit.hit.Ng_y, rayhit.hit.Ng_z);
-            intersection._normal = glm::normalize(intersection._normal);
+            intersection._normal = (intersection._normal).normalized();
             intersection._distance = rayhit.ray.tfar;
             intersection._material = _objectMap[rayhit.hit.geomID]._material;
 
@@ -153,13 +153,17 @@ class EmbreeScene : public Scene
 
           std::vector<Material*> materialPtrList;
 
-          for (size_t i = 0;i<result.Materials.size();i++)
+          for (size_t i = 0;i<result.MaterialsInfoList.size();i++)
           {
 
             //Material(Vec3f emission, Vec3f specular, Vec3f diffuse);
-            Material* materialPtr = new Material(result.Materials[i]._emission,result.Materials[i]._specular,result.Materials[i]._diffuse);
+            //Material* materialPtr = new Material(result.Materials[i]._emission,result.Materials[i]._specular,result.Materials[i]._diffuse);
+
+            //materialPtrList.emplace_back(materialPtr);
+            MaterialInfo matInfo = result.MaterialsInfoList[i];
+            Material* materialPtr = MaterialFactory::createMaterial(matInfo._emission,matInfo._specular,matInfo._diffuse);
             materialPtrList.emplace_back(materialPtr);
-            _materialList.emplace_back(materialPtr);  
+            _materialList.emplace_back(materialPtr); 
           }
 
           for(size_t i = 0; i< result.Triangles.size();i++)

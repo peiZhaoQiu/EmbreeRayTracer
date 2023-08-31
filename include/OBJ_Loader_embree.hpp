@@ -11,7 +11,7 @@
 
 struct OBJ_result{
     std::vector<Triangle> Triangles;
-    std::vector<Material> Materials;
+    std::vector<MaterialInfo> MaterialsInfoList;
     std::vector<int> geomIDs;
     std::vector<int> materialIDs;
 };
@@ -50,7 +50,7 @@ namespace OBJ_Loader
         auto& attrib = reader.GetAttrib();
         auto& shapes = reader.GetShapes();
         auto& materials = reader.GetMaterials();
-
+    std::cout << "Loading " << inputfile << std::endl;
         std::cout << shapes.size() << "  "<< materials.size() <<std::endl;
         for(size_t i = 0; i< materials.size();i++)
         {
@@ -58,11 +58,15 @@ namespace OBJ_Loader
             Vec3f diffuseVec(materials[i].diffuse[0],materials[i].diffuse[1],materials[i].diffuse[2]);
             Vec3f specularVec(materials[i].specular[0],materials[i].specular[1],materials[i].specular[2]);
             Vec3f emissionVec(materials[i].emission[0],materials[i].emission[1],materials[i].emission[2]);
-            Material mat = Material(emissionVec,specularVec,diffuseVec);
-            result.Materials.push_back(mat);
+            MaterialInfo mat = MaterialInfo(emissionVec,specularVec,diffuseVec);
+            result.MaterialsInfoList.push_back(mat);
+
+            std::cout << materials[i].emission[0] << " " << materials[i].emission[1] << " " << materials[i].emission[2] << std::endl;
+            std::cout << materials[i].diffuse[0] << " " << materials[i].diffuse[1] << " " << materials[i].diffuse[2] << std::endl;
+            std::cout << std::endl;
         }
 
-        std::cout << "Loaded " << inputfile << std::endl;
+       
 
             for (size_t i = 0; i<shapes.size(); i++) {
                 tinyobj::shape_t shape = shapes[i];

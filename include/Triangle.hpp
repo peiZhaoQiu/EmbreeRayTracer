@@ -12,8 +12,8 @@ class Triangle : public Geometry
         {
             e1 = _v2 - _v1;
             e2 = _v3 - _v1;
-            normal = glm::normalize(glm::cross(e1,e2));
-            area = glm::length(glm::cross(e1,e2))*0.5f;
+            normal = crossProduct(e1,e2).normalized();
+            area = (crossProduct(e1,e2)).length()*0.5f;
         }
         ~Triangle(){}
 
@@ -27,6 +27,10 @@ class Triangle : public Geometry
 
     void Sample(Intersection &pos, float &pdf) override{
         pdf = 1.0f / area;
+        float x = get_random_float();
+        float y = get_random_float();
+        pos._position = _v1 * (1.0f - x) + _v2 * (x * (1.0f - y)) + _v3 * (x * y);
+        pos._normal = normal;
     }
  
 

@@ -28,11 +28,15 @@ public:
     Vec3f getRayDirection(float x, float y) const {
         float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
         float halfFovTan = std::tan(glm::radians(fov) * 0.5f);
+        float randomX = get_random_float();
+        float randomY = get_random_float();
 
-        float viewX = (2.0f * (x + 0.5f) / width - 1.0f) * aspectRatio * halfFovTan;
-        float viewY = (2.0f * (y + 0.5f) / height - 1.0f) * halfFovTan;
+        //float viewX = (2.0f * (x + 0.5f) / width - 1.0f) * aspectRatio * halfFovTan;
+        //float viewY = (2.0f * (y + 0.5f) / height - 1.0f) * halfFovTan;
+        float viewX = (2.0f * (x + randomX) / width - 1.0f) * aspectRatio * halfFovTan;
+        float viewY = (1.0f- 2.0f * (y + randomY) / height ) * halfFovTan;
 
-        Vec3f rayDir = glm::normalize(viewX * right + viewY * up + forward);
+        Vec3f rayDir = (viewX * right + viewY * up + forward).normalized();
         return rayDir;
     }
 
@@ -42,8 +46,8 @@ private:
     Vec3f position, lookAt, up, right, forward;
 
     void updateBasis() {
-        forward = glm::normalize(lookAt - position);
-        right = glm::normalize(glm::cross(forward, up));
-        up = glm::cross(right, forward);
+        forward = (lookAt - position).normalized();
+        right = crossProduct(forward, up).normalized();
+        up = crossProduct(right, forward).normalized();
     }
 };

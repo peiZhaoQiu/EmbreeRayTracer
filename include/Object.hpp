@@ -24,7 +24,11 @@ public:
     bool intersect(const Ray& ray){return _geometry->intersect(ray);}
     Intersection getIntersection(const Ray& ray){return _geometry->getIntersection(ray);}
     float getArea(){return _geometry->getArea();}
-    void Sample(Intersection &pos,float &pdf){_geometry->Sample(pos,pdf);}
+    void Sample(Intersection &pos,float &pdf)
+    {
+        pos._material = _material;
+        _geometry->Sample(pos,pdf);
+    }
 
 
 };
