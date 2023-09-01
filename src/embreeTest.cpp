@@ -136,7 +136,7 @@ int main(){
 
   file.close();
   std::cout << "Wrote image file " << filename << std::endl;
-
+  std::cout << "sycl" << std::endl;
 
   return 0;
 }
