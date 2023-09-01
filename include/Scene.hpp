@@ -8,6 +8,7 @@
 #include <vector>   
 #include <string>
 #include <cmath>
+#include <iostream>
 
 
 
@@ -65,7 +66,7 @@ class Scene
                 area = area + _objectsList[i].getArea();
                 if (area >= p){
                     _objectsList[i].Sample(pos, pdf);
-                    pdf /= emitArea;
+                    //pdf /= emitArea;
                     return;
                 }
             }
@@ -91,7 +92,9 @@ class Scene
         }
 
         if (intersection._material->hasEmission()){
+            //std::cout << "here" << std::endl;
             return intersection._material->_emission;
+            
         }
 
         Intersection lightInter;
@@ -104,7 +107,7 @@ class Scene
         Ray shadowRay(intersection._position, lightDir);
         Intersection shadowInter = castRay(shadowRay);
 
-        if(shadowInter._hit && glm::abs((shadowInter._position - intersection._position).length() - (lightInter._position - intersection._position).length())  < 0.1f){
+        if(shadowInter._hit && (shadowInter._position - lightInter._position).length()  < 0.1f){
             //auto v = intersection._material->eval(ray.direction, lightDir, intersection._normal);
             //float k = dotProduct(lightDir, intersection._normal);
             //float k1 = dotProduct(-lightDir, lightInter._normal);
@@ -120,7 +123,7 @@ class Scene
         }
 
 
-        if(get_random_float() < 0.5f)
+        if(depth <3 || get_random_float() < 0.8f)
         {
             Vec3f outDirction = intersection._material->sample(ray.direction, intersection._normal);
             Ray outRay(intersection._position, outDirction);
@@ -131,7 +134,7 @@ class Scene
                             intersection._material->eval(ray.direction, outDirction, intersection._normal) *
                             dotProduct(outDirction, intersection._normal) /
                             intersection._material->pdf(ray.direction, outDirction, intersection._normal) /
-                            0.5f;
+                            0.8f;
             }
 
         }

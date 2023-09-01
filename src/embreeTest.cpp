@@ -25,8 +25,8 @@ RTC_NAMESPACE_USE
 #endif
 
 
-int compoentToint(double x){
-return (int)(255*(std::pow(clamp(x/255, 0.0, 1.0), 1/2.2)));
+int compoentToint(float x){
+return (int)(255*(std::pow(clamp(x, 0.0, 1.0), 1/2.2)));
 //return (int)(x);  
 }
 
@@ -59,8 +59,8 @@ int main(){
   // auto m = scene.castRay(ray3);
   auto n = scene.castRay(ray4);
   // Set up the camera parameters
-  int imageWidth = 200;
-  int imageHeight = 200;
+  int imageWidth = 1200;
+  int imageHeight = 960;
   float fov = 40.0f; // Field of view in degrees
 
   
@@ -80,6 +80,8 @@ int main(){
         return -1;
     }
     int ssp = 64;
+
+
   // Render the image
   for (int j = 0; j < imageHeight; ++j) 
   {
@@ -126,6 +128,8 @@ int main(){
           auto b = compoentToint(pixelColor.z);
 
           file << r << " " << g << " " << b << " "; 
+
+
 
       }
   }
