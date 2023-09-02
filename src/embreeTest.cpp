@@ -27,7 +27,6 @@ RTC_NAMESPACE_USE
 
 int compoentToint(float x){
 return (int)(255*(std::pow(clamp(x, 0.0, 1.0), 1/2.2)));
-//return (int)(x);  
 }
 
 
@@ -49,15 +48,7 @@ int main(){
   scene.addMeshObj(ModelDir, "right.obj");
   scene.addMeshObj(ModelDir, "light.obj");
 
-  Ray ray1(Vec3f(0.33f,0.33f,10.0f), Vec3f(0,0,1));
-  Ray ray2(Vec3f(1.00f,100.00f,1.0f), Vec3f(0,-1,0));
-  Ray ray3(Vec3f(150.00f,240.00f,167.0f), Vec3f(0,-1,0));
-  Ray ray4(Vec3f(278.0f, 278.0f, -800.0f), Vec3f(0,0,1));
 
-  // auto l = scene.castRay(ray1);
-  // auto k = scene.castRay(ray2);
-  // auto m = scene.castRay(ray3);
-  auto n = scene.castRay(ray4);
   // Set up the camera parameters
   int imageWidth = 1200;
   int imageHeight = 960;
@@ -92,43 +83,21 @@ int main(){
         {
 
           Vec3f rayDir = camera.getRayDirection(i, j);
-           
           Ray ray(camera.getPosition(), rayDir);
           
          
           
-          auto tem = scene.doRendering(ray, 0);
-          // auto intersection = scene.castRay(ray);
-          // if (intersection._hit) {
-          //     pixelColor = intersection._material->_diffuse;
-          // }
-          // else{
-          //     pixelColor = Vec3f(0.0f, 0.0f, 0.0f);
-          // }
-          //std::cout << tem.x << " " << tem.y << " " << tem.z << std::endl;
-          pixelColor = pixelColor + tem;
+          pixelColor +=scene.doRendering(ray, 0);
+          //pixelColor = pixelColor + tem;
         }
-       // std::cout << "i :" << i << "  "<< "j :" << j << std::endl;
         pixelColor = pixelColor/ ssp;
-        //std::cout << pixelColor.x << " " << pixelColor.y << " " << pixelColor.z << std::endl;
-          // // Cast ray
-          // Ray ray(camera.getPosition(), rayDir);
-          // //std::cout << "Ray direction: " << rayDir.x << ", " << rayDir.y << ", " << rayDir.z << std::endl;
-          
-          // auto intersection = scene.castRay(ray);
-          // //Vec3f pixelColor(0.0f, 0.0f, 0.0f);
-
-          // if (intersection._hit) {
-          //     pixelColor = intersection._material->_diffuse;
-          // }
-          std::cout << "progress : " << (float)(i + j * imageWidth) / (float)(imageWidth * imageHeight) * 100 << "%\r" << std::flush;
+         std::cout << "progress : " << (float)(i + j * imageWidth) / (float)(imageWidth * imageHeight) * 100 << "%\r" << std::flush;
 
           auto r = compoentToint(pixelColor.x);
           auto g = compoentToint(pixelColor.y);
           auto b = compoentToint(pixelColor.z);
 
           file << r << " " << g << " " << b << " "; 
-
 
 
       }
