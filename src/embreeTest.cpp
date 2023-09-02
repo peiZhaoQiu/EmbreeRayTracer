@@ -50,8 +50,8 @@ int main(){
 
 
   // Set up the camera parameters
-  int imageWidth = 1200;
-  int imageHeight = 960;
+  int imageWidth = 1200/10;
+  int imageHeight = 960/10;
   float fov = 40.0f; // Field of view in degrees
 
   

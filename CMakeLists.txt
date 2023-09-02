@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
+
+set(CMAKE_C_COMPILER /opt/intel/oneapi/compiler/latest/linux/bin/icx)
+set(CMAKE_CXX_COMPILER /opt/intel/oneapi/compiler/latest/linux/bin/icpx)
 project(HELLOEMBREE)
 
 option(ENABLE_DEBUG "Enable Valgrind-based tests" OFF)
