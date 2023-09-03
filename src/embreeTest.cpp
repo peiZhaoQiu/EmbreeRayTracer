@@ -87,7 +87,7 @@ int main(){
           
          
           
-          pixelColor +=scene.doRendering(ray, 0);
+          pixelColor +=scene.doRendering(ray);
           //pixelColor = pixelColor + tem;
         }
         pixelColor = pixelColor/ ssp;

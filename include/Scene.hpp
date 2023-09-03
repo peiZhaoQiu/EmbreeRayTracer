@@ -57,7 +57,7 @@ class Scene
             first = false;
         }
 
-        float p = glm::abs(get_random_float()) * emitArea;
+        float p = std::abs(get_random_float()) * emitArea;
         float area = 0;
         for (size_t i = 0; i < _objectsList.size(); i++)
         {
@@ -76,72 +76,73 @@ class Scene
     }
 
 
-    Vec3f doRendering(const Ray &ray, int depth)
+Vec3f doRendering(const Ray &initialRay)
+{
+    Vec3f L_total = Vec3f(0, 0, 0);
+    Vec3f L_indir = Vec3f(0, 0, 0);
+    Ray currentRay = initialRay;
+    int maxDepth = 50;
+    
+    for (int depth = 0; depth < maxDepth; ++depth)
     {
-        // if (depth > 5){
-        //     return Vec3f(0, 0, 0);
-        // }
-
         Vec3f L_dir = Vec3f(0, 0, 0);
-        Vec3f L_indir = Vec3f(0, 0, 0);
+        Vec3f L_indir_temp = Vec3f(0, 0, 0);
+        Vec3f outDirction;
+        Intersection intersection = castRay(currentRay);
 
-        Intersection intersection = castRay(ray);
-
-        if (!intersection._hit){
-            return Vec3f(0, 0, 0);
+        if (!intersection._hit)
+        {
+            break; // Terminate if no intersection
         }
 
-        if (intersection._material->hasEmission()){
-            //std::cout << "here" << std::endl;
-            return intersection._material->_emission;
-            
+        if (intersection._material->hasEmission())
+        {
+            L_total += intersection._material->_emission;
+            break; // Terminate if the material has emission
         }
 
         Intersection lightInter;
         float lightPdf;
         sampleLight(lightInter, lightPdf);
 
-
-        Vec3f lightDir = (lightInter._position - intersection._position).normalized(); // object to light
+        Vec3f lightDir = (lightInter._position - intersection._position).normalized();
         float lightObjectdistance = (lightInter._position - intersection._position).length();
         Ray shadowRay(intersection._position, lightDir);
         Intersection shadowInter = castRay(shadowRay);
 
-        if(shadowInter._hit && (shadowInter._position - lightInter._position).length()  < 0.1f){
-            //auto v = intersection._material->eval(ray.direction, lightDir, intersection._normal);
-            //float k = dotProduct(lightDir, intersection._normal);
-            //float k1 = dotProduct(-lightDir, lightInter._normal);
-            //float k2 = std::pow((lightInter._position - intersection._position).length(), 2);
-            // std::cout << "k: " << k << std::endl;
-            // std::cout << "v: " << v.x << " " << v.y << " " << v.z << std::endl;
-            L_dir = lightInter._material->_emission * 
-                                intersection._material->eval(ray.direction, lightDir, intersection._normal) *
-                                dotProduct(lightDir, intersection._normal) *
-                                dotProduct(-lightDir, lightInter._normal) /
-                                (lightObjectdistance * lightObjectdistance) /
-                                lightPdf;
+        if (shadowInter._hit && (shadowInter._position - lightInter._position).length() < 0.1f)
+        {
+            L_dir = lightInter._material->_emission *
+                     intersection._material->eval(currentRay.direction, lightDir, intersection._normal) *
+                     dotProduct(lightDir, intersection._normal) *
+                     dotProduct(-lightDir, lightInter._normal) /
+                     (lightObjectdistance * lightObjectdistance) /
+                     lightPdf;
         }
 
-
-        if(depth <3 || get_random_float() < 0.8f)
+        if (depth < 3 || get_random_float() < 0.8f)
         {
-            Vec3f outDirction = intersection._material->sample(ray.direction, intersection._normal);
+            outDirction = intersection._material->sample(currentRay.direction, intersection._normal);
             Ray outRay(intersection._position, outDirction);
             Intersection outRayInter = castRay(outRay);
+
             if (outRayInter._hit && !outRayInter._material->hasEmission())
             {
-                L_indir = doRendering(outRay, depth + 1) * 
-                            intersection._material->eval(ray.direction, outDirction, intersection._normal) *
-                            dotProduct(outDirction, intersection._normal) /
-                            intersection._material->pdf(ray.direction, outDirction, intersection._normal) /
-                            0.8f;
+                L_indir_temp = intersection._material->eval(currentRay.direction, outDirction, intersection._normal) *
+                               dotProduct(outDirction, intersection._normal) /
+                               intersection._material->pdf(currentRay.direction, outDirction, intersection._normal) /
+                               0.8f;
             }
-
         }
 
-        return L_dir + L_indir;
-        //return L_indir;
+        L_indir = L_indir_temp;
+        L_total += L_dir + L_indir;
+
+        currentRay = Ray(intersection._position, outDirction); // Update the ray for the next iteration
     }
+
+    return L_total;
+}
     
     
 
