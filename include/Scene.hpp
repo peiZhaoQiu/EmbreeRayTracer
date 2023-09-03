@@ -79,14 +79,25 @@ class Scene
 Vec3f doRendering(const Ray &initialRay)
 {
     Vec3f L_total = Vec3f(0, 0, 0);
-    Vec3f L_indir = Vec3f(0, 0, 0);
+    //Vec3f L_indir = Vec3f(0, 0, 0);
     Ray currentRay = initialRay;
     int maxDepth = 50;
+
+    Vec3f indirLightParam[maxDepth];
+    Vec3f dirLight[maxDepth];
+
+    for (int i = 0; i < maxDepth; i++)
+    {
+        indirLightParam[i] = Vec3f(0, 0, 0);
+        dirLight[i] = Vec3f(0, 0, 0);
+    }
+
+    int depth = 0;
     
-    for (int depth = 0; depth < maxDepth; ++depth)
+    for (depth = 0; depth < maxDepth; ++depth)
     {
         Vec3f L_dir = Vec3f(0, 0, 0);
-        Vec3f L_indir_temp = Vec3f(0, 0, 0);
+        Vec3f LIndirParam = Vec3f(0, 0, 0);
         Vec3f outDirction;
         Intersection intersection = castRay(currentRay);
 
@@ -97,7 +108,7 @@ Vec3f doRendering(const Ray &initialRay)
 
         if (intersection._material->hasEmission())
         {
-            L_total += intersection._material->_emission;
+            dirLight[depth] = intersection._material->_emission;
             break; // Terminate if the material has emission
         }
 
@@ -120,6 +131,8 @@ Vec3f doRendering(const Ray &initialRay)
                      lightPdf;
         }
 
+        dirLight[depth] = L_dir;
+
         if (depth < 3 || get_random_float() < 0.8f)
         {
             outDirction = intersection._material->sample(currentRay.direction, intersection._normal);
@@ -128,19 +141,34 @@ Vec3f doRendering(const Ray &initialRay)
 
             if (outRayInter._hit && !outRayInter._material->hasEmission())
             {
-                L_indir_temp = intersection._material->eval(currentRay.direction, outDirction, intersection._normal) *
+                LIndirParam = intersection._material->eval(currentRay.direction, outDirction, intersection._normal) *
                                dotProduct(outDirction, intersection._normal) /
                                intersection._material->pdf(currentRay.direction, outDirction, intersection._normal) /
                                0.8f;
             }
         }
+        else
+        {
+            //indirLightParam[depth] = Vec3f(0, 0, 0);
+            break;
+        }
 
-        L_indir = L_indir_temp;
-        L_total += L_dir + L_indir;
+        //L_indir = LIndirParam;
+        indirLightParam[depth] = LIndirParam;
+        //L_total += L_dir + L_indir;
 
         currentRay = Ray(intersection._position, outDirction); // Update the ray for the next iteration
     }
 
+
+    for (int i = depth; i > 0; i--)
+    {
+        //L_indir = indirLightParam[i] + dirLight[i] * L_indir;
+        auto tem = (L_total + dirLight[i]); 
+        L_total = tem * indirLightParam[i-1];
+    }
+
+    L_total = L_total * indirLightParam[0] + dirLight[0];
     return L_total;
 }
     
