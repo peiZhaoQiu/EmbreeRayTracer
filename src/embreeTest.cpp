@@ -74,34 +74,34 @@ int main(){
 
 
   // Render the image
-  for (int j = 0; j < imageHeight; ++j) 
-  {
-      for (int i = 0; i < imageWidth; ++i) 
-      {
-        Vec3f pixelColor(0.0f, 0.0f, 0.0f);
-        for (int s = 0; s < ssp; ++s) 
-        {
+  // for (int j = 0; j < imageHeight; ++j) 
+  // {
+  //     for (int i = 0; i < imageWidth; ++i) 
+  //     {
+  //       Vec3f pixelColor(0.0f, 0.0f, 0.0f);
+  //       for (int s = 0; s < ssp; ++s) 
+  //       {
 
-          Vec3f rayDir = camera.getRayDirection(i, j);
-          Ray ray(camera.getPosition(), rayDir);
+  //         Vec3f rayDir = camera.getRayDirection(i, j);
+  //         Ray ray(camera.getPosition(), rayDir);
           
          
           
-          pixelColor +=scene.doRendering(ray);
-          //pixelColor = pixelColor + tem;
-        }
-        pixelColor = pixelColor/ ssp;
-         std::cout << "progress : " << (float)(i + j * imageWidth) / (float)(imageWidth * imageHeight) * 100 << "%\r" << std::flush;
+  //         pixelColor +=scene.doRendering(ray);
+  //         //pixelColor = pixelColor + tem;
+  //       }
+  //       pixelColor = pixelColor/ ssp;
+  //        std::cout << "progress : " << (float)(i + j * imageWidth) / (float)(imageWidth * imageHeight) * 100 << "%\r" << std::flush;
 
-          auto r = compoentToint(pixelColor.x);
-          auto g = compoentToint(pixelColor.y);
-          auto b = compoentToint(pixelColor.z);
+  //         auto r = compoentToint(pixelColor.x);
+  //         auto g = compoentToint(pixelColor.y);
+  //         auto b = compoentToint(pixelColor.z);
 
-          file << r << " " << g << " " << b << " "; 
+  //         file << r << " " << g << " " << b << " "; 
 
 
-      }
-  }
+  //     }
+  // }
 
   file.close();
   std::cout << "Wrote image file " << filename << std::endl;
