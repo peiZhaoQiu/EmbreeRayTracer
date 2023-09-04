@@ -15,47 +15,33 @@
 class Scene
 {
     public:
-        Scene(){};
-        ~Scene()
-        {
-            size_t n_size = _materialList.size();
-            for (int i = n_size - 1; i >= 0; i--)
-            {
-                if (_materialList[i] != nullptr){
-                    delete _materialList[i];
-                }
-            }
+        Scene();
+        ~Scene();
+  
 
-            size_t o_size = _objectsList.size();
-            for (int i = o_size - 1; i >= 0; i--)
-            {
-                if (_objectsList[i]._geometry != nullptr){
-                    delete _objectsList[i]._geometry;
-                }
-            }
+    Intersection castRay(Ray inputRay);
 
-        }
-
-    virtual Intersection castRay(Ray inputRay)=0;
-
-    virtual void addMeshObj(std::string objFilePath, std::string objFile)=0;
+    void addMeshObj(std::string objFilePath, std::string objFile);
 
 
     std::vector<Object> _objectsList;
     std::vector<Material*> _materialList;
 
+
+    std::unordered_map<int,Object> _objectMap;
+
     void sampleLight(Intersection &pos, float &pdf)
     {
-        static bool first = true;
-        static float emitArea = 0;
-        if (first){
-            for (size_t i = 0; i < _objectsList.size(); i++){
-                if (_objectsList[i]._material->hasEmission()){
+        float emitArea = 0;
+
+        for (size_t i = 0; i < _objectsList.size(); i++){
+            if (_objectsList[i]._material->hasEmission())
+            {
                     emitArea += _objectsList[i].getArea();
-                }
             }
-            first = false;
         }
+
+    
 
         float p = std::abs(get_random_float()) * emitArea;
         float area = 0;
@@ -149,7 +135,7 @@ Vec3f doRendering(const Ray &initialRay)
         }
         else
         {
-            //indirLightParam[depth] = Vec3f(0, 0, 0);
+            indirLightParam[depth] = Vec3f(0, 0, 0);
             break;
         }
 

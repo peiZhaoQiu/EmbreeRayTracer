@@ -14,6 +14,7 @@
 #include "Camera.hpp" 
 #include <fstream>
 #include "common.hpp"
+#include <sycl/sycl.hpp>
 
 
 /* 
@@ -40,7 +41,7 @@ int main(){
   std::string ModelDir = dir_path + "/Model/";
 
 
-  EmbreeScene scene;
+  Scene scene;
   scene.addMeshObj(ModelDir, "floor.obj");
   scene.addMeshObj(ModelDir, "tallbox.obj");
   scene.addMeshObj(ModelDir, "shortbox.obj");
@@ -102,6 +103,47 @@ int main(){
 
   //     }
   // }
+
+
+    std::vector<int> outputBuffer(imageWidth * imageHeight * 3, 0);
+
+    sycl::buffer output(outputBuffer.data(), sycl::range<1>(imageWidth * imageHeight * 3));
+
+    // Create a SYCL queue to execute on a device
+    //queue q(gpu_selector{});
+    sycl::queue q;
+
+    q.submit([&](sycl::handler& cgh) {
+       // auto output = sycl::buffer<int, 1>(outputBuffer.data(), sycl::range<1>(imageWidth * imageHeight * 3));
+
+        cgh.parallel_for<class rendering>(sycl::range<2>(imageWidth, imageHeight), [=](sycl::id<2> index) {
+            int i = index[0];
+            int j = index[1];
+
+            Vec3f pixelColor(0.0f, 0.0f, 0.0f);
+
+            for (int s = 0; s < ssp; ++s) {
+                Vec3f rayDir = camera.getRayDirection(i, j);
+                Ray ray(camera.getPosition(), rayDir);
+
+                pixelColor += scene.doRendering(ray);
+            }
+
+            pixelColor = pixelColor / ssp;
+
+            auto r = compoentToint(pixelColor.x);
+            auto g = compoentToint(pixelColor.y);
+            auto b = compoentToint(pixelColor.z);
+
+            int pixelIndex = (i + j * imageWidth) * 3;
+            output[pixelIndex] = r;
+            output[pixelIndex + 1] = g;
+            output[pixelIndex + 2] = b;
+        });
+    });
+
+    // Wait for the kernel to finish
+    q.wait();
 
   file.close();
   std::cout << "Wrote image file " << filename << std::endl;
